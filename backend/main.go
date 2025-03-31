@@ -38,4 +38,33 @@ func main() {
 	}
 
 	fmt.Println("Successfully connected to MySQL!")
+
+	selectQuery := "SELECT * FROM users"
+	rows, err := db.Query(selectQuery)
+	if err != nil {
+		log.Fatal("Error querying data:", err)
+	}
+
+	fmt.Println("Fetched Users:")
+
+	// Iterate over the rows and print the results
+	for rows.Next() {
+		var user_id, google_id int
+		var email, name string
+		var balance float32
+		err := rows.Scan(&user_id, &google_id, &email, &name, &balance)
+		if err != nil {
+			log.Fatal("Error scanning row:", err)
+		}
+
+		fmt.Printf("user_id: %d, google_id: %d, email: %s, name %s, balance %f\n", user_id, google_id, email, name, balance)
+
+	}
+
+	// Check for errors from iteration
+	if err := rows.Err(); err != nil {
+		log.Fatal("Error in row iteration:", err)
+	}
+
+	defer rows.Close()
 }
