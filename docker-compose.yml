@@ -45,19 +45,24 @@ services:
     networks:
       - app-network
 
-  # frontend:
-  #   build: ./frontend
-  #   container_name: frontend
-  #   ports:
-  #     - "3000:3000"
-  #   volumes:
-  #     - ./frontend:/app
-  #   environment:
-  #     BACKEND_URL: http://backend:8000
-  #   depends_on:
-  #     - backend
-  #   networks:
-  #     - app-network
+  frontend:
+    build: ./frontend
+    container_name: mpkbet-frontend
+    ports:
+      - "3000:3000"
+    volumes:
+      - ./frontend:/app
+      - /app/node_modules
+    working_dir: /app
+    command: bun run start --host
+    environment:
+      - VITE_BACKEND_URL=${VITE_BACKEND_URL}
+    # env_file:
+    #   - .env
+    depends_on:
+      - backend
+    networks:
+      - app-network
 
 volumes:
   mysql-data:
