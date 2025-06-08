@@ -21,6 +21,17 @@ func main() {
 
 	r := gin.Default()
 
+	/*
+		// for use with token validator
+
+		// Protect routes that require authentication
+		authGroup := r.Group("/api")
+		authGroup.Use(middleware.ValidateGoogleAccessToken())
+
+		authGroup.GET("/user/info", handlers.GetUserInfo)
+		authGroup.GET("/user/bets", handlers.GetUserBets)
+	*/
+
 	// auth
 	r.GET("/auth/google/login", handlers.HandleGoogleLogin)
 	r.GET("/auth/google/callback", handlers.HandleGoogleCallback)
