@@ -41,14 +41,23 @@ func GetStops(c *gin.Context) {
 		return
 	}
 
-	rows, err := db.Query("SELECT * FROM stops")
+	rows, err := db.Query("SELECT stop_id, stop_name, stop_lat, stop_lon FROM stops")
 	if err != nil {
 		fmt.Println(err)
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "Could not fetch stops"})
 		return
 	}
+	defer rows.Close()
 
-	c.JSON(http.StatusOK, rows)
+	var stops []serialization.Stops
+	for rows.Next() {
+		var stop serialization.Stops
+		if err := rows.Scan(&stop.StopID, &stop.StopName, &stop.StopLat, &stop.StopLon); err == nil {
+			stops = append(stops, stop)
+		}
+	}
+
+	c.JSON(http.StatusOK, stops)
 }
 
 // all about a specific stop
@@ -61,32 +70,13 @@ func GetStopInfo(c *gin.Context) {
 
 	stopID := c.Param("id")
 
-	var stop serialization.StopsDictionary
-	err := db.QueryRow("SELECT stop_id, stop_name, stop_location_x, stop_location_y FROM stops_dictionary WHERE stop_id = $1", stopID).
-		Scan(&stop.StopID, &stop.StopName, &stop.StopLocationX, &stop.StopLocationY)
+	var stop serialization.Stops
+	err := db.QueryRow("SELECT stop_id, stop_name, stop_location_x, stop_location_y FROM stops WHERE stop_id = $1", stopID).
+		Scan(&stop.StopID, &stop.StopName, &stop.StopLat, &stop.StopLon)
 	if err != nil {
 		c.JSON(http.StatusNotFound, gin.H{"error": "Stop not found"})
 		return
 	}
-
-	rows, err := db.Query("SELECT tram_lane_id FROM stop_train_map WHERE stop_id = $1", stopID)
-	if err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to load trams for stop"})
-		return
-	}
-	defer rows.Close()
-
-	var trams []string
-	for rows.Next() {
-		var tramID string
-		rows.Scan(&tramID)
-		trams = append(trams, tramID)
-	}
-
-	c.JSON(http.StatusOK, gin.H{
-		"stop":  stop,
-		"trams": trams,
-	})
 }
 
 // all on bets for logged in user

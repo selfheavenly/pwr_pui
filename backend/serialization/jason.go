@@ -39,6 +39,7 @@ type StopTrainMap struct {
 	StopID     int    `json:"stop_id,omitempty"`
 }
 
+/*
 // StopsDictionary represents the stops_dictionary table
 type StopsDictionary struct {
 	StopID        int     `json:"stop_id"`
@@ -46,6 +47,8 @@ type StopsDictionary struct {
 	StopLocationY *string `json:"stop_location_y,omitempty"`
 	StopName      *string `json:"stop_name,omitempty"`
 }
+
+*/
 
 // TramsDictionary represents the trams_dictionary table
 type TramsDictionary struct {
@@ -245,6 +248,7 @@ func GetStopTrainMapJSON(db *sql.DB) (string, error) {
 	return string(jsonData), nil
 }
 
+/*
 func GetStopsDictionaryJSON(db *sql.DB) (string, error) {
 	query := "SELECT stop_id, stop_location_x, stop_location_y, stop_name FROM stops_dictionary"
 	rows, err := db.Query(query)
@@ -270,6 +274,8 @@ func GetStopsDictionaryJSON(db *sql.DB) (string, error) {
 
 	return string(jsonData), nil
 }
+
+*/
 
 func GetTramsDictionaryJSON(db *sql.DB) (string, error) {
 	query := "SELECT tram_lane_id, tram_name FROM trams_dictionary"

@@ -40,6 +40,27 @@ func HandleGoogleCallback(c *gin.Context) {
 	var userInfo map[string]interface{}
 	json.NewDecoder(resp.Body).Decode(&userInfo)
 
+	c.Set("google_id", userInfo["id"])
+
+	//add user to the database if their google_id is not already present
+	db, ok := c.MustGet("dbmpk").(*sql.DB)
+	if !ok {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "failed to get database connection"})
+		return
+	}
+
+	googleID := userInfo["id"].(string)
+	email := userInfo["email"].(string)
+	name := userInfo["name"].(string)
+	balance := 0.0
+
+	err = AddUserToDB(db, googleID, email, name, balance)
+	if err != nil {
+		log.Println("Error adding user to database:", err)
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to add user to database"})
+		return
+	}
+
 	c.JSON(http.StatusOK, userInfo)
 }
 
