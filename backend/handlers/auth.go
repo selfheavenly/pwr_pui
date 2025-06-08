@@ -40,34 +40,22 @@ func HandleGoogleCallback(c *gin.Context) {
 	var userInfo map[string]interface{}
 	json.NewDecoder(resp.Body).Decode(&userInfo)
 
-	db, ok := c.MustGet("db").(*sql.DB)
-	if !ok {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": "failed to get database connection"})
-		return
-	}
-
-	err = AddUserToDB(db, userInfo["id"].(int), userInfo["id"].(string), userInfo["email"].(string), userInfo["name"].(string), 0.0)
-	if err != nil {
-		return
-	}
-
-	// Save to DB or session here...
 	c.JSON(http.StatusOK, userInfo)
 }
 
-func AddUserToDB(db *sql.DB, userID int, googleID, email, name string, balance float64) error {
+func AddUserToDB(db *sql.DB, googleID, email, name string, balance float64) error {
 	// Check if the user exists
-	query := "SELECT COUNT(*) FROM users WHERE user_id = ?"
+	query := "SELECT COUNT(*) FROM users WHERE google_id = ?"
 	var count int
-	err := db.QueryRow(query, userID).Scan(&count)
+	err := db.QueryRow(query, googleID).Scan(&count)
 	if err != nil {
 		return fmt.Errorf("error checking user existence: %w", err)
 	}
 
 	// If user does not exist, insert them into the database
 	if count == 0 {
-		insertQuery := "INSERT INTO users (user_id, google_id, email, name, balance) VALUES (?, ?, ?, ?, ?)"
-		_, err := db.Exec(insertQuery, userID, googleID, email, name, balance)
+		insertQuery := "INSERT INTO users (google_id, email, name, balance) VALUES (?, ?, ?, ?)"
+		_, err := db.Exec(insertQuery, googleID, email, name, balance)
 		if err != nil {
 			return fmt.Errorf("error adding user to database: %w", err)
 		}

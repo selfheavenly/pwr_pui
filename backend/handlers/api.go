@@ -3,32 +3,18 @@ package handlers
 import (
 	"PUI/serialization"
 	"database/sql"
+	"fmt"
 	"github.com/gin-gonic/gin"
 	"net/http"
 )
 
-// get current logged in user info
 func GetUserInfo(c *gin.Context) {
-	db, ok := c.MustGet("db").(*sql.DB)
-	if !ok {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": "failed to get database connection"})
-		return
-	}
 
-	// Call the serialization function
-	userJSON, err := serialization.GetUsersJSON(db)
-	if err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
-		return
-	}
-
-	// Return the serialized JSON
-	c.JSON(http.StatusOK, gin.H{"data": userJSON})
 }
 
 // all info on one specific tram
 func GetTramInfo(c *gin.Context) {
-	db, ok := c.MustGet("db").(*sql.DB)
+	db, ok := c.MustGet("dbmpk").(*sql.DB)
 	if !ok {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "failed to get database connection"})
 		return
@@ -49,53 +35,20 @@ func GetTramInfo(c *gin.Context) {
 
 // list of stops, each has a list of arriving trams, a name, (direction? possibly)
 func GetStops(c *gin.Context) {
-	db, ok := c.MustGet("db").(*sql.DB)
+	db, ok := c.MustGet("dbopen").(*sql.DB)
 	if !ok {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "failed to get database connection"})
 		return
 	}
 
-	rows, err := db.Query("SELECT stop_id, stop_name FROM stops_dictionary")
+	rows, err := db.Query("SELECT * FROM stops")
 	if err != nil {
+		fmt.Println(err)
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "Could not fetch stops"})
 		return
 	}
-	defer rows.Close()
 
-	type StopWithTrams struct {
-		Stop          serialization.StopsDictionary `json:"stop"`
-		ArrivingTrams []string                      `json:"arriving_trams"`
-	}
-
-	var result []StopWithTrams
-
-	for rows.Next() {
-		var stop serialization.StopsDictionary
-		err := rows.Scan(&stop.StopID, &stop.StopName)
-		if err != nil {
-			continue
-		}
-
-		tramRows, err := db.Query("SELECT tram_lane_id FROM stop_train_map WHERE stop_id = $1", stop.StopID)
-		if err != nil {
-			continue
-		}
-
-		var tramIDs []string
-		for tramRows.Next() {
-			var tramID string
-			tramRows.Scan(&tramID)
-			tramIDs = append(tramIDs, tramID)
-		}
-		tramRows.Close()
-
-		result = append(result, StopWithTrams{
-			Stop:          stop,
-			ArrivingTrams: tramIDs,
-		})
-	}
-
-	c.JSON(http.StatusOK, result)
+	c.JSON(http.StatusOK, rows)
 }
 
 // all about a specific stop

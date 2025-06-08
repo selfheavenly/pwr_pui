@@ -4,11 +4,9 @@ import (
 	"PUI/config"
 	"PUI/db"
 	"PUI/handlers"
-	"PUI/serialization"
+	"PUI/middleware"
 	"fmt"
 	"github.com/gin-gonic/gin"
-	//"github.com/go-sql-driver/mysql"
-	"log"
 	//"os"
 
 	_ "github.com/go-sql-driver/mysql"
@@ -17,7 +15,8 @@ import (
 func main() {
 
 	config.LoadEnv()
-	DB := db.Connect()
+	DB_MPK := db.Connect()
+	DB_OPEN := db.ConnectOpen()
 
 	r := gin.Default()
 
@@ -31,6 +30,9 @@ func main() {
 		authGroup.GET("/user/info", handlers.GetUserInfo)
 		authGroup.GET("/user/bets", handlers.GetUserBets)
 	*/
+
+	r.Use(middleware.DatabaseMiddlewareOpen(DB_OPEN))
+	r.Use(middleware.DatabaseMiddlewareMPK(DB_MPK))
 
 	// auth
 	r.GET("/auth/google/login", handlers.HandleGoogleLogin)
@@ -58,42 +60,4 @@ func main() {
 		fmt.Println(err)
 		return
 	}
-
-	jsonUsers, err := serialization.GetUsersJSON(DB)
-	if err != nil {
-		log.Fatal(err)
-	}
-
-	jsonBets, err := serialization.GetBetsJSON(DB)
-	if err != nil {
-		log.Fatal(err)
-	}
-
-	jsonStatusDictionary, err := serialization.GetStatusDictionaryJSON(DB)
-	if err != nil {
-		log.Fatal(err)
-	}
-
-	jsonStopStrainMap, err := serialization.GetStopTrainMapJSON(DB)
-	if err != nil {
-		log.Fatal(err)
-	}
-
-	jsonStopsDictionary, err := serialization.GetStopsDictionaryJSON(DB)
-	if err != nil {
-		log.Fatal(err)
-	}
-
-	jsonTramsDictionary, err := serialization.GetTramsDictionaryJSON(DB)
-	if err != nil {
-		log.Fatal(err)
-	}
-
-	fmt.Println(jsonUsers)
-	fmt.Println(jsonBets)
-	fmt.Println(jsonStatusDictionary)
-	fmt.Println(jsonStopStrainMap)
-	fmt.Println(jsonStopsDictionary)
-	fmt.Println(jsonTramsDictionary)
-
 }

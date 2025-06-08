@@ -1,6 +1,7 @@
 package middleware
 
 import (
+	"database/sql"
 	"encoding/json"
 	"net/http"
 	"strings"
@@ -60,6 +61,20 @@ func ValidateGoogleAccessToken() gin.HandlerFunc {
 		c.Set("user_email", user.Email)
 		c.Set("user_id", user.ID)
 
+		c.Next()
+	}
+}
+
+func DatabaseMiddlewareMPK(db *sql.DB) gin.HandlerFunc {
+	return func(c *gin.Context) {
+		c.Set("dbmpk", db)
+		c.Next()
+	}
+}
+
+func DatabaseMiddlewareOpen(db *sql.DB) gin.HandlerFunc {
+	return func(c *gin.Context) {
+		c.Set("dbopen", db)
 		c.Next()
 	}
 }
