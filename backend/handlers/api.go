@@ -6,6 +6,8 @@ import (
 	"fmt"
 	"github.com/gin-gonic/gin"
 	"net/http"
+	"sort"
+	"strconv"
 	"strings"
 )
 
@@ -158,7 +160,8 @@ type BetBrief struct {
 	TramLaneID          string  `json:"tram_lane_id"` --
 	StopID              int     `json:"stop_id"` --
 	StopName            string  `json:"stop_name"` mikolaj ma zrobic
-	ActualDelay         string  `json:"actual_delay"` //TODO
+	// TODO
+	ActualDelay         string  `json:"actual_delay"`
 }
 
 
@@ -187,6 +190,61 @@ func PostBet(c *gin.Context) {
 
 func GetRates(c *gin.Context) {
 
+}
+
+/*
+	export interface RateOdds {
+	  label: string; // e.g. "0:00 - 0:30"
+	  value: number; // e.g. 1.78
+	}
+*/
+func parseDelayToSeconds(delayStr string) (int, error) {
+	parts := strings.Split(delayStr, ":")
+	if len(parts) != 2 {
+		return 0, fmt.Errorf("invalid delay format")
+	}
+	mins, err1 := strconv.Atoi(parts[0])
+	secs, err2 := strconv.Atoi(parts[1])
+	if err1 != nil || err2 != nil {
+		return 0, fmt.Errorf("invalid delay numbers")
+	}
+
+	dS := mins*60 + secs
+
+	return dS, nil
+}
+
+func groupBetsByInterval(bets []serialization.BetBrief, interval int) []serialization.Odd {
+	binMap := make(map[int][]float64)
+
+	for _, bet := range bets {
+		seconds, err := parseDelayToSeconds(bet.ActualDelay)
+		if err != nil {
+			continue
+		}
+		bin := seconds / interval
+		binMap[bin] = append(binMap[bin], bet.BetRate)
+	}
+
+	var result []serialization.Odd
+	for bin, rates := range binMap {
+		sum := 0.0
+		for _, r := range rates {
+			sum += r
+		}
+		avg := sum / float64(len(rates))
+		label := fmt.Sprintf("%d:%02d - %d:%02d", (bin*interval)/60, (bin*interval)%60, ((bin+1)*interval)/60, ((bin+1)*interval)%60)
+		result = append(result, serialization.Odd{
+			Label: label,
+			Value: avg,
+		})
+	}
+
+	sort.Slice(result, func(i, j int) bool {
+		return result[i].Label < result[j].Label
+	})
+
+	return result
 }
 
 /*
