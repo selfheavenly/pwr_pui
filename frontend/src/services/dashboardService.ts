@@ -4,9 +4,15 @@ import type { BetBrief, RecentBetsBrief } from "@/types/bets";
 
 import type { StopSummary } from "@/types/stops";
 import type { User } from "@/types/user";
+// Import the mock data directly
+import mockBetsData from "@/mock/bets.json";
+import mockStopsData from "@/mock/stops.json"; // Assuming this path is correct and it's an array of StopSummary
+
+// Assuming this path is correct and it's an array of BetBrief
 
 // /api/user/me - User profile & balance
 export async function getUserBalance(): Promise<User> {
+  // This remains a mock for now, as requested.
   return {
     user_id: 101,
     google_id: "google-oauth-id",
@@ -16,87 +22,32 @@ export async function getUserBalance(): Promise<User> {
     ytd_change_percent: 20.1,
   };
 }
+
 // /api/bets - Recent bet overviews
-
 export async function getRecentBetsBrief(
-  page: number,
-  size: number
+  page: number, // The current page number (0-indexed)
+  size: number // The number of items per page
 ): Promise<RecentBetsBrief> {
-  const total = 32; // simulate a backend total count
-  const start = page * size;
-  const end = Math.min(start + size, total);
+  // Use the imported mock data as the source
+  const allBets: BetBrief[] = mockBetsData as BetBrief[]; // Cast to BetBrief[] for type safety
 
-  const bets: BetBrief[] = Array.from({ length: end - start }, (_, i) => {
-    const index = start + i;
+  const total = allBets.length; // Total number of available bets from the mock data
+  const start = page * size; // Calculate the starting index for the current page
+  const end = Math.min(start + size, total); // Calculate the ending index, ensuring it doesn't exceed total
 
-    const statusOptions: BetBrief["status"][] = ["won", "lost", "pending"];
-    const status = statusOptions[index % statusOptions.length];
-
-    const amount = 100 + (index % 5) * 50; // varied amount
-    const rate = parseFloat((1.4 + ((index * 13) % 6) * 0.2).toFixed(2)); // more variance
-    let result: number;
-
-    if (status === "won") result = parseFloat((amount * rate).toFixed(2));
-    else if (status === "lost") result = -amount;
-    else result = 0;
-
-    const tramId = ["03", "18", "9", "10", "7", "0"][index % 6];
-    const destinations = [
-      "Księże Małe",
-      "Gaj",
-      "Leśnica",
-      "Krzyki",
-      "Biskupin",
-      "Nowy Dwór",
-      "Borek",
-    ];
-    const stops = ["Rynek", "Grunwald", "Dominikańska", "Plac JP2"];
-
-    return {
-      bet_id: index + 1,
-      bet_amount: amount,
-      bet_rate: rate,
-      bet_result: result,
-      placed_at: new Date(Date.now() - index * 86400000).toISOString(),
-      status,
-      tram_lane_id: tramId,
-      tram_lane_destination: destinations[index % destinations.length],
-      stop_id: 100 + index,
-      stop_name: stops[index % stops.length],
-      actual_delay: `${Math.floor(Math.random() * 5) + 1}min`,
-    };
-  });
+  // Slice the array to get only the bets for the current page
+  const betsForPage: BetBrief[] = allBets.slice(start, end);
 
   return {
-    data: bets,
-    page,
-    next_page: end < total,
-    page_count: Math.ceil(total / size),
+    data: betsForPage, // The bets for the requested page
+    page: page, // The current page number
+    next_page: end < total, // True if there are more pages after this one
+    page_count: Math.ceil(total / size), // Total number of pages
   };
 }
 
 // /api/stops - Virtual stop list
 export async function getStops(): Promise<StopSummary[]> {
-  return [
-    {
-      stop_id: 1,
-      stop_name: "Pl. Jana Pawła II",
-      lines: ["18", "21", "22"],
-    },
-    {
-      stop_id: 2,
-      stop_name: "Rynek",
-      lines: ["18", "21", "22"],
-    },
-    {
-      stop_id: 3,
-      stop_name: "Pasaż Grunwaldzki",
-      lines: ["18", "21", "22"],
-    },
-    {
-      stop_id: 4,
-      stop_name: "Galeria Dominikańska",
-      lines: ["18", "21", "22"],
-    },
-  ];
+  // Return the imported mock stops data directly
+  return mockStopsData as StopSummary[]; // Cast to StopSummary[] for type safety
 }

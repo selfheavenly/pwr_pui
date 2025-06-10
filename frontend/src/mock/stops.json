@@ -1,0 +1,22 @@
+[
+  {
+    "stop_id": 1,
+    "stop_name": "Pl. Jana Pawła II",
+    "lines": ["18", "21", "22", "31", "32"]
+  },
+  {
+    "stop_id": 2,
+    "stop_name": "Rynek",
+    "lines": ["3", "4", "5", "10", "23"]
+  },
+  {
+    "stop_id": 3,
+    "stop_name": "Pasaż Grunwaldzki",
+    "lines": ["1", "2", "6", "9", "17"]
+  },
+  {
+    "stop_id": 4,
+    "stop_name": "Galeria Dominikańska",
+    "lines": ["11", "12", "13", "14", "15"]
+  }
+]

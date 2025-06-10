@@ -1,3 +1,4 @@
+import { BetsTable } from "../dashboard/DashboardBetsTable";
 import { DashboardBalance } from "@/components/dashboard/DashboardBalance";
 import { DashboardBets } from "@/components/dashboard/DashboardBets";
 import { DashboardHeader } from "@/components/dashboard/DashboardHeader";
@@ -25,6 +26,7 @@ export default function DashboardPage() {
         changePercent={user.ytd_change_percent}
       />
       <DashboardBets lastBets={betsData.data} />
+      <BetsTable />
       <DashboardStops virtualStops={stops} />
     </div>
   );
