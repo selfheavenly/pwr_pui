@@ -18,7 +18,7 @@ export default function DashboardPage() {
   }
 
   return (
-    <div className="min-h-screen bg-black text-white px-4 py-6 space-y-6">
+    <div className="min-h-screen text-white px-4 py-6 space-y-6">
       <DashboardHeader />
       <DashboardBalance
         balance={user.balance}
