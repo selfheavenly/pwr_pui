@@ -6,21 +6,15 @@ import type { StopSummary } from "@/types/stops";
 import type { User } from "@/types/user";
 // Import the mock data directly
 import mockBetsData from "@/mock/bets.json";
-import mockStopsData from "@/mock/stops.json"; // Assuming this path is correct and it's an array of StopSummary
+import mockStopsData from "@/mock/stops.json";
+import mockUserData from "@/mock/user.json";
 
 // Assuming this path is correct and it's an array of BetBrief
 
 // /api/user/me - User profile & balance
 export async function getUserBalance(): Promise<User> {
   // This remains a mock for now, as requested.
-  return {
-    user_id: 101,
-    google_id: "google-oauth-id",
-    email: "user@example.com",
-    name: "Jan Kowalski",
-    balance: 45231.89,
-    ytd_change_percent: 20.1,
-  };
+  return mockUserData;
 }
 
 // /api/bets - Recent bet overviews
