@@ -6,9 +6,9 @@ import (
 	"PUI/handlers"
 	"PUI/middleware"
 	"fmt"
+	"github.com/gin-contrib/sessions"
+	"github.com/gin-contrib/sessions/cookie"
 	"github.com/gin-gonic/gin"
-	//"os"
-
 	_ "github.com/go-sql-driver/mysql"
 )
 
@@ -20,6 +20,37 @@ func main() {
 
 	r := gin.Default()
 
+	r.Use(middleware.DatabaseMiddlewareOpen(DB_OPEN))
+	r.Use(middleware.DatabaseMiddlewareMPK(DB_MPK))
+
+	store := cookie.NewStore([]byte("secret"))
+	r.Use(sessions.Sessions("mysession", store))
+
+	// auth
+	r.GET("/auth/google/login", handlers.HandleGoogleLogin)
+	r.GET("/auth/google/callback", handlers.HandleGoogleCallback)
+
+	// Apply middleware to routes that require authentication
+	protected := r.Group("/api")
+	protected.Use(middleware.GoogleIDMiddleware())
+	{
+		// user
+		protected.GET("/user/me", handlers.GetUserInfo)
+
+		// stops
+		protected.GET("/stops", handlers.GetStops)
+		protected.GET("/stop/:stopId", handlers.GetStopInfo)
+
+		// trams
+		protected.GET("/tram/:tramId", handlers.GetTramInfo)
+
+		// bets
+		protected.GET("/bets", handlers.GetUserBets)
+		protected.POST("/bets", handlers.PostBet)
+		protected.GET("/bets/:betId", handlers.GetBetInfo)
+		protected.GET("/rates/:stopId", handlers.GetRates)
+	}
+
 	/*
 		// for use with token validator
 
@@ -30,29 +61,6 @@ func main() {
 		authGroup.GET("/user/info", handlers.GetUserInfo)
 		authGroup.GET("/user/bets", handlers.GetUserBets)
 	*/
-
-	r.Use(middleware.DatabaseMiddlewareOpen(DB_OPEN))
-	r.Use(middleware.DatabaseMiddlewareMPK(DB_MPK))
-
-	// auth
-	r.GET("/auth/google/login", handlers.HandleGoogleLogin)
-	r.GET("/auth/google/callback", handlers.HandleGoogleCallback)
-
-	// user
-	r.GET("/api/user/me", handlers.GetUserInfo)
-
-	// stops
-	r.GET("/api/stops", handlers.GetStops)
-	r.GET("/api/stop/:stopId", handlers.GetStopInfo)
-
-	// trams
-	r.GET("/api/tram/:tramId", handlers.GetTramInfo)
-
-	// bets
-	r.GET("/api/bets", handlers.GetUserBets)
-	r.POST("/api/bets", handlers.PostBet)
-	r.GET("/api/bets/:BetId", handlers.GetBetInfo)
-	r.GET("/api/rates/:stopId", handlers.GetRates)
 
 	err := r.Run(":8000")
 

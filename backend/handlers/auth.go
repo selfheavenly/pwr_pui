@@ -6,6 +6,7 @@ import (
 	"database/sql"
 	"encoding/json"
 	"fmt"
+	"github.com/gin-contrib/sessions"
 	"log"
 	"net/http"
 	//"os"
@@ -38,30 +39,46 @@ func HandleGoogleCallback(c *gin.Context) {
 	defer resp.Body.Close()
 
 	var userInfo map[string]interface{}
-	json.NewDecoder(resp.Body).Decode(&userInfo)
-
-	c.Set("google_id", userInfo["id"])
-
-	//add user to the database if their google_id is not already present
-	db, ok := c.MustGet("dbmpk").(*sql.DB)
-	if !ok {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": "failed to get database connection"})
+	if err := json.NewDecoder(resp.Body).Decode(&userInfo); err != nil {
+		log.Println("Error decoding user info:", err)
+		c.AbortWithStatus(http.StatusInternalServerError)
 		return
 	}
 
-	googleID := userInfo["id"].(string)
+	googleID, ok := userInfo["id"].(string)
+	if !ok {
+		log.Println("Invalid google_id in user info")
+		c.AbortWithStatus(http.StatusInternalServerError)
+		return
+	}
+
+	// Save google_id in session
+	session := sessions.Default(c)
+	session.Set("google_id", googleID)
+	if err := session.Save(); err != nil {
+		log.Println("Error saving session:", err)
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to save session"})
+		return
+	}
+
+	// Add user to the database if not already present
+	db, ok := c.MustGet("dbmpk").(*sql.DB)
+	if !ok {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to get database connection"})
+		return
+	}
+
 	email := userInfo["email"].(string)
 	name := userInfo["name"].(string)
 	balance := 0.0
 
-	err = AddUserToDB(db, googleID, email, name, balance)
-	if err != nil {
+	if err := AddUserToDB(db, googleID, email, name, balance); err != nil {
 		log.Println("Error adding user to database:", err)
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to add user to database"})
 		return
 	}
 
-	c.JSON(http.StatusOK, userInfo)
+	c.JSON(http.StatusOK, gin.H{"message": "User authenticated successfully", "user": userInfo})
 }
 
 func AddUserToDB(db *sql.DB, googleID, email, name string, balance float64) error {

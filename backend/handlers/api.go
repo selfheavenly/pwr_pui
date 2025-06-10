@@ -5,11 +5,43 @@ import (
 	"database/sql"
 	"fmt"
 	"github.com/gin-gonic/gin"
+	"log"
 	"net/http"
 )
 
 func GetUserInfo(c *gin.Context) {
+	db, ok := c.MustGet("dbmpk").(*sql.DB)
+	if !ok {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "failed to get database connection"})
+		return
+	}
 
+	googleID_get, exists := c.Get("google_id")
+	if !exists {
+		c.JSON(http.StatusUnauthorized, gin.H{"error": "google_id not found in context"})
+		return
+	}
+
+	googleID, ok := googleID_get.(string)
+	if !ok || googleID == "" {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid google_id"})
+		return
+	}
+
+	err := db.Ping()
+	if err != nil {
+		log.Fatal("Database is not reachable:", err)
+	}
+
+	var user serialization.Users
+	err = db.QueryRow("SELECT user_id, google_id, email, name, balance FROM users WHERE google_id = ?", googleID).
+		Scan(&user.UserID, &user.GoogleID, &user.Email, &user.Name, &user.Balance)
+	if err != nil {
+		c.JSON(http.StatusNotFound, gin.H{"error": "User not found"})
+		return
+	}
+
+	c.JSON(http.StatusOK, user)
 }
 
 // all info on one specific tram
@@ -71,7 +103,22 @@ func GetStopInfo(c *gin.Context) {
 	stopID := c.Param("id")
 
 	var stop serialization.Stops
-	err := db.QueryRow("SELECT stop_id, stop_name, stop_location_x, stop_location_y FROM stops WHERE stop_id = $1", stopID).
+	err := db.QueryRow("SELECT DISTINCT\n"+
+		"    r.route_short_name,"+
+		"    s.stop_name,"+
+		"    s.stop_lat,"+
+		"    s.stop_lon"+
+		"FROM"+
+		"    stop_times AS st"+
+		"JOIN"+
+		"    trips AS t ON st.trip_id = t.trip_id"+
+		"JOIN"+
+		"    routes AS r ON t.route_id = r.route_id"+
+		"JOIN"+
+		"    stops AS s ON st.stop_id = s.stop_id"+
+		"WHERE s.stop_id = $1"+
+		"ORDER BY"+
+		"    route_short_name;", stopID).
 		Scan(&stop.StopID, &stop.StopName, &stop.StopLat, &stop.StopLon)
 	if err != nil {
 		c.JSON(http.StatusNotFound, gin.H{"error": "Stop not found"})
@@ -81,7 +128,7 @@ func GetStopInfo(c *gin.Context) {
 
 // all on bets for logged in user
 func GetUserBets(c *gin.Context) {
-	db, ok := c.MustGet("db").(*sql.DB)
+	db, ok := c.MustGet("dbmpk").(*sql.DB)
 	if !ok {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "failed to get database connection"})
 		return
@@ -120,3 +167,22 @@ func PostBet(c *gin.Context) {
 func GetRates(c *gin.Context) {
 
 }
+
+/*
+SELECT DISTINCT
+    s.stop_id,
+    r.route_short_name,
+    st.arrival_time,
+    st.departure_time
+FROM
+    stop_times AS st
+JOIN
+    trips AS t ON st.trip_id = t.trip_id
+JOIN
+    routes AS r ON t.route_id = r.route_id
+JOIN
+    stops AS s ON st.stop_id = s.stop_id
+WHERE s.stop_id = "15" AND r.route_short_name = "123"
+ORDER BY
+    arrival_time;
+*/

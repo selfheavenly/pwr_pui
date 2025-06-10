@@ -3,6 +3,7 @@ package middleware
 import (
 	"database/sql"
 	"encoding/json"
+	"github.com/gin-contrib/sessions"
 	"net/http"
 	"strings"
 
@@ -17,7 +18,6 @@ type GoogleUser struct {
 	GivenName     string `json:"given_name"`
 	FamilyName    string `json:"family_name"`
 	Picture       string `json:"picture"`
-	Locale        string `json:"locale"`
 }
 
 // Middleware that checks the Authorization header and validates token with Google
@@ -75,6 +75,23 @@ func DatabaseMiddlewareMPK(db *sql.DB) gin.HandlerFunc {
 func DatabaseMiddlewareOpen(db *sql.DB) gin.HandlerFunc {
 	return func(c *gin.Context) {
 		c.Set("dbopen", db)
+		c.Next()
+	}
+}
+
+func GoogleIDMiddleware() gin.HandlerFunc {
+	return func(c *gin.Context) {
+		session := sessions.Default(c)
+		googleID := session.Get("google_id")
+
+		if googleID == nil {
+			c.JSON(http.StatusUnauthorized, gin.H{"error": "User not authenticated"})
+			c.Abort()
+			return
+		}
+
+		// Set google_id in the context
+		c.Set("google_id", googleID)
 		c.Next()
 	}
 }
