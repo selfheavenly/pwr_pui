@@ -197,6 +197,8 @@ func GetRates(c *gin.Context) {
 	  label: string; // e.g. "0:00 - 0:30"
 	  value: number; // e.g. 1.78
 	}
+
+chuj
 */
 func parseDelayToSeconds(delayStr string) (int, error) {
 	parts := strings.Split(delayStr, ":")
