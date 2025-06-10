@@ -6,7 +6,6 @@ import (
 	"database/sql"
 	"encoding/json"
 	"fmt"
-	"github.com/gin-contrib/sessions"
 	"log"
 	"net/http"
 	//"os"
@@ -52,14 +51,7 @@ func HandleGoogleCallback(c *gin.Context) {
 		return
 	}
 
-	// Save google_id in session
-	session := sessions.Default(c)
-	session.Set("google_id", googleID)
-	if err := session.Save(); err != nil {
-		log.Println("Error saving session:", err)
-		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to save session"})
-		return
-	}
+	c.Set("google_id", googleID)
 
 	// Add user to the database if not already present
 	db, ok := c.MustGet("dbmpk").(*sql.DB)

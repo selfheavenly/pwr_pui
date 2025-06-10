@@ -136,6 +136,58 @@ type Trips struct {
 	VariantID    *int    `json:"variant_id,omitempty"`
 }
 
+// /stops
+
+type StopSummary struct {
+	StopID   int      `json:"stop_id"`
+	StopName string   `json:"stop_name"`
+	Lines    []string `json:"lines"`
+}
+
+type Lines struct {
+	LineID   int    `json:"line_id"`
+	LineName string `json:"line_name"`
+}
+
+// /stop/stopid
+
+type VStopData struct {
+	StopName   string      `json:"stopName"`
+	Lines      []int       `json:"lines"`
+	Balance    int         `json:"balance"`
+	Departures []Departure `json:"departures"`
+}
+
+type Departure struct {
+	Line        string `json:"line"`
+	Destination string `json:"destination"`
+	ArrivalTime string `json:"arrivalTime"`
+	Odds        []Odd  `json:"odds"`
+}
+
+type Odd struct {
+	Label string  `json:"label"`
+	Value float64 `json:"value"`
+}
+
+// bets
+
+type RecentBetsBrief struct {
+	Data []BetBrief `json:"data"`
+}
+
+type BetBrief struct {
+	BetID       int     `json:"bet_id"`
+	BetAmount   float64 `json:"bet_amount"`
+	BetRate     float64 `json:"bet_rate"`
+	PlacedAt    string  `json:"placed_at"`
+	Status      string  `json:"status"`
+	TramLaneID  string  `json:"tram_lane_id"`
+	StopID      int     `json:"stop_id"`
+	StopName    string  `json:"stop_name"`
+	ActualDelay string  `json:"actual_delay"`
+}
+
 func GetUsersJSON(db *sql.DB) (string, error) {
 	selectQuery := "SELECT user_id, google_id, email, name, balance FROM users"
 	rows, err := db.Query(selectQuery)

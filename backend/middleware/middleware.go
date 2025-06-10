@@ -1,24 +1,14 @@
 package middleware
 
 import (
+	"PUI/models"
 	"database/sql"
 	"encoding/json"
-	"github.com/gin-contrib/sessions"
 	"net/http"
 	"strings"
 
 	"github.com/gin-gonic/gin"
 )
-
-type GoogleUser struct {
-	ID            string `json:"id"`
-	Email         string `json:"email"`
-	VerifiedEmail bool   `json:"verified_email"`
-	Name          string `json:"name"`
-	GivenName     string `json:"given_name"`
-	FamilyName    string `json:"family_name"`
-	Picture       string `json:"picture"`
-}
 
 // Middleware that checks the Authorization header and validates token with Google
 func ValidateGoogleAccessToken() gin.HandlerFunc {
@@ -48,18 +38,15 @@ func ValidateGoogleAccessToken() gin.HandlerFunc {
 			c.AbortWithStatusJSON(http.StatusUnauthorized, gin.H{"error": "Invalid access token"})
 			return
 		}
-		defer resp.Body.Close()
 
-		var user GoogleUser
+		var user models.User
 		if err := json.NewDecoder(resp.Body).Decode(&user); err != nil {
 			c.AbortWithStatusJSON(http.StatusInternalServerError, gin.H{"error": "Failed to parse Google response"})
 			return
 		}
 
 		// Store user info in context
-		c.Set("google_user", user)
-		c.Set("user_email", user.Email)
-		c.Set("user_id", user.ID)
+		c.Set("google_id", user.ID)
 
 		c.Next()
 	}
@@ -75,23 +62,6 @@ func DatabaseMiddlewareMPK(db *sql.DB) gin.HandlerFunc {
 func DatabaseMiddlewareOpen(db *sql.DB) gin.HandlerFunc {
 	return func(c *gin.Context) {
 		c.Set("dbopen", db)
-		c.Next()
-	}
-}
-
-func GoogleIDMiddleware() gin.HandlerFunc {
-	return func(c *gin.Context) {
-		session := sessions.Default(c)
-		googleID := session.Get("google_id")
-
-		if googleID == nil {
-			c.JSON(http.StatusUnauthorized, gin.H{"error": "User not authenticated"})
-			c.Abort()
-			return
-		}
-
-		// Set google_id in the context
-		c.Set("google_id", googleID)
 		c.Next()
 	}
 }

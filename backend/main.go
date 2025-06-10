@@ -6,8 +6,6 @@ import (
 	"PUI/handlers"
 	"PUI/middleware"
 	"fmt"
-	"github.com/gin-contrib/sessions"
-	"github.com/gin-contrib/sessions/cookie"
 	"github.com/gin-gonic/gin"
 	_ "github.com/go-sql-driver/mysql"
 )
@@ -23,32 +21,27 @@ func main() {
 	r.Use(middleware.DatabaseMiddlewareOpen(DB_OPEN))
 	r.Use(middleware.DatabaseMiddlewareMPK(DB_MPK))
 
-	store := cookie.NewStore([]byte("secret"))
-	r.Use(sessions.Sessions("mysession", store))
-
 	// auth
 	r.GET("/auth/google/login", handlers.HandleGoogleLogin)
 	r.GET("/auth/google/callback", handlers.HandleGoogleCallback)
 
 	// Apply middleware to routes that require authentication
-	protected := r.Group("/api")
-	protected.Use(middleware.GoogleIDMiddleware())
+
+	apiGroup := r.Group("/api")
 	{
-		// user
-		protected.GET("/user/me", handlers.GetUserInfo)
-
-		// stops
-		protected.GET("/stops", handlers.GetStops)
-		protected.GET("/stop/:stopId", handlers.GetStopInfo)
-
-		// trams
-		protected.GET("/tram/:tramId", handlers.GetTramInfo)
+		apiGroup.GET("/stops", handlers.GetStops)
+		apiGroup.GET("/stop/:stopId", handlers.GetStopInfo)
 
 		// bets
+		apiGroup.GET("/rates/:stopId", handlers.GetRates)
+	}
+
+	protected := r.Group("/api")
+	protected.Use(middleware.ValidateGoogleAccessToken())
+	{
+		protected.GET("/user/me", handlers.GetUserInfo) // git
 		protected.GET("/bets", handlers.GetUserBets)
-		protected.POST("/bets", handlers.PostBet)
-		protected.GET("/bets/:betId", handlers.GetBetInfo)
-		protected.GET("/rates/:stopId", handlers.GetRates)
+		protected.POST("/bets", handlers.PostBet) // git
 	}
 
 	/*
