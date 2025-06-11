@@ -19,17 +19,6 @@ export interface BetBrief {
   actual_delay: string; // Actual delay
 }
 
-// export interface BetDetails extends Bet {
-//   line: string;
-//   destination: string;
-//   stop: string;
-//   time: string;
-//   odds: number;
-//   amount: number;
-//   when: string;
-//   placed_at: string;
-// }
-
 export interface PlaceBetRequest {
   tram_lane_id: string;
   stop_id: number;

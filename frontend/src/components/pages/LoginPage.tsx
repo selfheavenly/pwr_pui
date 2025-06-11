@@ -1,32 +1,46 @@
-import { Card, CardContent } from "@/components/ui/card";
-
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
+import { FcGoogle } from "react-icons/fc";
+import { useNavigate } from "@tanstack/react-router";
 
 export default function LoginPage() {
-  return (
-    <div className="min-h-screen bg-black flex flex-col items-center justify-center text-white px-4">
-      <div className="w-full max-w-md">
-        <Card className="bg-black border-none shadow-none">
-          <CardContent className="p-0 space-y-6">
-            <div className="text-center">
-              <h1 className="text-2xl font-bold">Log in</h1>
-              <p className="text-gray-400">Welcome back. Please log in.</p>
-            </div>
+  const navigate = useNavigate();
 
-            <div className="space-y-4">
-              <Input placeholder="Email" className="bg-zinc-900 text-white" />
-              <Input
-                placeholder="Password"
-                type="password"
-                className="bg-zinc-900 text-white"
-              />
-              <Button className="w-full bg-white text-black hover:bg-zinc-100">
-                Log In
-              </Button>
-            </div>
-          </CardContent>
-        </Card>
+  const handleGoogleLogin = () => {
+    // Tu normalnie byłoby logowanie przez Google
+    console.log("Zaloguj przez Google");
+
+    // Tymczasowe przekierowanie
+    navigate({ to: "/dashboard" });
+  };
+
+  return (
+    <div className="fixed inset-0 z-0">
+      {/* 🔁 GIF jako tło */}
+      <img
+        src="/bgtram.gif"
+        alt="Background"
+        className="absolute inset-0 w-full h-full object-cover"
+      />
+
+      {/* 🔲 Overlay */}
+      <div className="absolute inset-0 bg-black/60 backdrop-blur-md" />
+
+      {/* 📦 Karta logowania */}
+      <div className="relative z-10 flex items-center justify-center h-full">
+        <div className="bg-black/40 backdrop-blur-lg border border-zinc-700 rounded-2xl shadow-xl px-8 py-10 max-w-sm w-full text-center space-y-6">
+          <h1 className="text-3xl font-bold text-white">MPKBet</h1>
+          <p className="text-gray-300 text-sm">
+            Zaloguj się przez Google, aby rozpocząć
+          </p>
+
+          <Button
+            onClick={handleGoogleLogin}
+            className="w-full bg-white text-black hover:bg-zinc-100 flex items-center justify-center gap-2 px-6 py-5 rounded-xl font-medium text-base"
+          >
+            <FcGoogle className="text-xl" />
+            Zaloguj się przez Google
+          </Button>
+        </div>
       </div>
     </div>
   );

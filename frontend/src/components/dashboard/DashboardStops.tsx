@@ -1,4 +1,5 @@
 import { Card } from "@/components/ui/card";
+import { Link } from "@tanstack/react-router";
 import type { StopSummary } from "@/types/stops";
 
 interface Props {
@@ -14,22 +15,26 @@ export function DashboardStops({ virtualStops }: Props) {
       </p>
       <div className="grid grid-cols-2 gap-3">
         {virtualStops.map((stop) => (
-          <Card
+          <Link
             key={stop.stop_id}
-            className="bg-black p-4 space-y-2 border border-zinc-800"
+            to="/vstop/$id"
+            params={{ id: String(stop.stop_id) }}
+            className="block"
           >
-            <div className="font-medium">{stop.stop_name}</div>
-            <div className="flex flex-wrap gap-2">
-              {stop.lines.map((line, i) => (
-                <div
-                  key={i}
-                  className="bg-zinc-800 px-2 py-1 rounded-md text-xs"
-                >
-                  {line}
-                </div>
-              ))}
-            </div>
-          </Card>
+            <Card className="bg-black p-4 space-y-2 border border-zinc-800 hover:border-white/20 transition">
+              <div className="font-medium">{stop.stop_name}</div>
+              <div className="flex flex-wrap gap-2">
+                {stop.lines.map((line, i) => (
+                  <div
+                    key={i}
+                    className="bg-zinc-800 px-2 py-1 rounded-md text-xs"
+                  >
+                    {line}
+                  </div>
+                ))}
+              </div>
+            </Card>
+          </Link>
         ))}
       </div>
     </div>

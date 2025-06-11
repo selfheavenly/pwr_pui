@@ -1,0 +1,15 @@
+{
+  "tram_id": "18-xyz-001",
+  "stop_id": 101,
+  "stop_name": "Rynek",
+  "line": "21",
+  "destination": "Gaj",
+  "arrival_time": "21:39:00",
+  "balance": 26019,
+  "odds": [
+    { "label": "0:00 - 0:30", "value": 1.04 },
+    { "label": "0:31 - 1:00", "value": 1.78 },
+    { "label": "1:01 - 2:00", "value": 2.41 },
+    { "label": "2:01 - 🧍‍♀️", "value": 4.93 }
+  ]
+}

@@ -7,7 +7,6 @@ import {
 } from "@/components/ui/dropdown-menu";
 
 import { AddFundsDialog } from "./AddFundsDialog";
-import { Button } from "@/components/ui/button";
 import { useState } from "react";
 
 export function DashboardHeader() {

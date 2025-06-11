@@ -19,7 +19,7 @@ export default function DashboardPage() {
   }
 
   return (
-    <div className="min-h-screen text-white px-4 py-6 space-y-6">
+    <div className="relative min-h-screen text-white px-4 py-6 space-y-6 overflow-hidden bg-black">
       <DashboardHeader />
       <DashboardBalance
         balance={user.balance}

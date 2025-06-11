@@ -1,9 +1,18 @@
-import { getVStopData } from "@/services/vstopService";
+import { getTripOdds, getVStopData } from "@/services/vstopService";
+
+import type { TripDetails } from "@/types/trips";
 import { useQuery } from "@tanstack/react-query";
 
-export function useVStopData() {
+export function useVStopData(id: string) {
   return useQuery({
-    queryKey: ["vstop"],
-    queryFn: getVStopData,
+    queryKey: ["vstop", id],
+    queryFn: () => getVStopData(id),
+  });
+}
+
+export function useTripOdds(tripID: string) {
+  return useQuery<TripDetails>({
+    queryKey: ["tripOdds", tripID],
+    queryFn: () => getTripOdds(tripID),
   });
 }
