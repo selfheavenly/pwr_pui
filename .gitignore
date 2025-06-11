@@ -1,3 +1,4 @@
 # Ignore list
 *.DS_Store
 .env
+mysql-data.tar.gz
