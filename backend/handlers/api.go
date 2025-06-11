@@ -46,6 +46,65 @@ func GetUserInfo(c *gin.Context) {
 	c.JSON(http.StatusOK, user)
 }
 
+func Logout(c *gin.Context) {
+	accessToken, exists := c.Get("access_token")
+	if !exists {
+		c.JSON(http.StatusUnauthorized, gin.H{"error": "Access token not found"})
+		return
+	}
+
+	revokeURL := "https://oauth2.googleapis.com/revoke?token=" + accessToken.(string)
+	resp, err := http.Post(revokeURL, "application/x-www-form-urlencoded", nil)
+	if err != nil || resp.StatusCode != http.StatusOK {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to revoke token"})
+		return
+	}
+
+	c.Set("google_id", nil)
+	c.Set("access_token", nil)
+
+	c.JSON(http.StatusOK, gin.H{"message": "Logged out successfully"})
+}
+
+func AddBalance(c *gin.Context) {
+	db, ok := c.MustGet("dbmpk").(*sql.DB)
+	if !ok {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "failed to get database connection"})
+		return
+	}
+
+	bimbom, exists := c.Get("google_id")
+	if !exists {
+		c.JSON(http.StatusUnauthorized, gin.H{"error": "google_id not found in context"})
+		return
+	}
+
+	googleID, ok := bimbom.(string)
+	if !ok {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Invalid google_id type"})
+		return
+	}
+
+	var amount float64
+	if err := c.ShouldBindJSON(&amount); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid input data"})
+		return
+	}
+
+	if amount <= 0 {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Amount must be greater than zero"})
+		return
+	}
+
+	_, err := db.Exec("UPDATE users SET balance = balance + ? WHERE google_id = ?", amount, googleID)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Could not update user balance"})
+		return
+	}
+
+	c.JSON(http.StatusOK, gin.H{"message": "Balance updated successfully"})
+}
+
 // list of stops, each has a list of arriving trams, a name, (direction? possibly)
 func GetStops(c *gin.Context) {
 	db, ok := c.MustGet("dbopen").(*sql.DB)

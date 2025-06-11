@@ -47,6 +47,7 @@ func ValidateGoogleAccessToken() gin.HandlerFunc {
 
 		// Store user info in context
 		c.Set("google_id", user.ID)
+		c.Set("access_token", token)
 
 		c.Next()
 	}

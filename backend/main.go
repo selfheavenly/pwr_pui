@@ -42,6 +42,8 @@ func main() {
 		protected.GET("/user/me", handlers.GetUserInfo) // git
 		protected.GET("/bets", handlers.GetUserBets)    // git
 		protected.POST("/bets", handlers.PostBet)       // git
+		protected.POST("/deposit", handlers.AddBalance) // git
+		protected.GET("/logout", handlers.Logout)       // git
 	}
 
 	/*
