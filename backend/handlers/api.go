@@ -359,7 +359,6 @@ func GetStopInfo(c *gin.Context) {
 
 // all on bets for logged in user
 func GetUserBets(c *gin.Context) {
-
 	db, ok := c.MustGet("dbmpk").(*sql.DB)
 	if !ok {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "failed to get database connection"})
@@ -380,7 +379,13 @@ func GetUserBets(c *gin.Context) {
 
 	fmt.Println("getuserbets googleID:", googleID)
 
-	rows, err := db.Query("SELECT bet_id, tram_line_id, stop_id, placed_at, bet_rate, bet_amount, status, predicted_time, google_id FROM bets WHERE google_id = ?", googleID)
+	// Pagination parameters
+	page, _ := strconv.Atoi(c.DefaultQuery("page", "1"))
+	pageSize, _ := strconv.Atoi(c.DefaultQuery("page_size", "10"))
+	offset := (page - 1) * pageSize
+
+	// Fetch paginated bets
+	rows, err := db.Query("SELECT bet_id, tram_line_id, stop_id, placed_at, bet_rate, bet_amount, status, predicted_time, google_id FROM bets WHERE google_id = ? LIMIT ? OFFSET ?", googleID, pageSize, offset)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "Could not fetch bets"})
 		fmt.Println("Error fetching bets:", err)
@@ -389,7 +394,6 @@ func GetUserBets(c *gin.Context) {
 	defer rows.Close()
 
 	var bets []serialization.BetBrief
-
 	for rows.Next() {
 		var bet serialization.BetBrief
 		err := rows.Scan(&bet.BetID, &bet.TramLineID, &bet.StopID, &bet.PlacedAt, &bet.BetRate, &bet.BetAmount, &bet.Status, &bet.PredictedTime, &bet.GoogleID)
@@ -398,13 +402,32 @@ func GetUserBets(c *gin.Context) {
 			fmt.Println("Error scanning row:", err)
 			return
 		}
-
 		bets = append(bets, bet)
 	}
 
-	validateBets(bets, c)
+	// Get total count of bets
+	var totalCount int
+	err = db.QueryRow("SELECT COUNT(*) FROM bets WHERE google_id = ?", googleID).Scan(&totalCount)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Could not fetch total count"})
+		fmt.Println("Error fetching total count:", err)
+		return
+	}
 
-	c.JSON(http.StatusOK, bets)
+	// Calculate total pages
+	totalPages := totalCount / pageSize
+	if totalCount%pageSize > 0 {
+		totalPages++
+	}
+
+	// Return paginated response
+	c.JSON(http.StatusOK, gin.H{
+		"bets":        bets,
+		"page":        page,
+		"page_size":   pageSize,
+		"total":       totalCount,
+		"total_pages": totalPages,
+	})
 }
 
 /*
