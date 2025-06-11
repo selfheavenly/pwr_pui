@@ -144,11 +144,6 @@ type StopSummary struct {
 	Lines    []string `json:"lines"`
 }
 
-type Lines struct {
-	LineID   int    `json:"line_id"`
-	LineName string `json:"line_name"`
-}
-
 // /stop/stopid
 
 type VStopData struct {
@@ -172,20 +167,28 @@ type Odd struct {
 
 // bets
 
-type RecentBetsBrief struct {
-	Data []BetBrief `json:"data"`
+type BetBrief struct {
+	GoogleID      string  `json:"google_id"`
+	PredictedTime string  `json:"predicted_time"`
+	BetID         int     `json:"bet_id"`
+	BetAmount     float64 `json:"bet_amount"`
+	BetRate       float64 `json:"bet_rate"`
+	PlacedAt      string  `json:"placed_at"`
+	Status        string  `json:"status"`
+	TramLineID    string  `json:"tram_line_id"`
+	StopID        int     `json:"stop_id"`
 }
 
-type BetBrief struct {
-	BetID       int     `json:"bet_id"`
-	BetAmount   float64 `json:"bet_amount"`
-	BetRate     float64 `json:"bet_rate"`
-	PlacedAt    string  `json:"placed_at"`
-	Status      string  `json:"status"`
-	TramLaneID  string  `json:"tram_lane_id"`
-	StopID      int     `json:"stop_id"`
-	StopName    string  `json:"stop_name"`
-	ActualDelay string  `json:"actual_delay"`
+type VehiclePosition struct {
+	Name      string  `json:"name"`
+	Latitude  float64 `json:"latitude"`  // Latitude
+	Longitude float64 `json:"longitude"` // Longitude
+	K         int     `json:"k"`         // Unique identifier
+}
+
+type Position struct {
+	Latitude  float64 `json:"latitude"`
+	Longitude float64 `json:"longitude"`
 }
 
 func GetUsersJSON(db *sql.DB) (string, error) {

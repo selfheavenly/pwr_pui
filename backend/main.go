@@ -29,8 +29,8 @@ func main() {
 
 	apiGroup := r.Group("/api")
 	{
-		apiGroup.GET("/stops", handlers.GetStops)
-		apiGroup.GET("/stop/:stopId", handlers.GetStopInfo)
+		apiGroup.GET("/stops", handlers.GetStops)           // git
+		apiGroup.GET("/stop/:stopId", handlers.GetStopInfo) // git bardzo :>
 
 		// bets
 		apiGroup.GET("/rates/:stopId", handlers.GetRates)
@@ -40,8 +40,8 @@ func main() {
 	protected.Use(middleware.ValidateGoogleAccessToken())
 	{
 		protected.GET("/user/me", handlers.GetUserInfo) // git
-		protected.GET("/bets", handlers.GetUserBets)
-		protected.POST("/bets", handlers.PostBet) // git
+		protected.GET("/bets", handlers.GetUserBets)    // git
+		protected.POST("/bets", handlers.PostBet)       // git
 	}
 
 	/*
