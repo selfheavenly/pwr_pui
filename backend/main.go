@@ -39,6 +39,7 @@ func main() {
 	protected := r.Group("/api")
 	protected.Use(middleware.ValidateGoogleAccessToken())
 	{
+		protected.GET("/trip", handlers.GetTripDetails) // git
 		protected.GET("/user/me", handlers.GetUserInfo) // git
 		protected.GET("/bets", handlers.GetUserBets)    // git
 		protected.POST("/bets", handlers.PostBet)       // git

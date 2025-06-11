@@ -16,6 +16,97 @@ import (
 	"time"
 )
 
+func GetTripDetails(c *gin.Context) {
+
+	type TripDetailsGet struct {
+		StopName    string `json:"stop_name"`
+		RouteID     string `json:"tram_id"`
+		DirectionID string `json:"direction_id"`
+		ArrivalTime string `json:"arrival_time"`
+	}
+
+	var get TripDetailsGet
+	if err := c.ShouldBindJSON(&get); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid input data"})
+		return
+	}
+
+	//odds
+
+	rates := []serialization.Odd{
+		{Label: "0:00 - 0:30", Value: 1.78},
+		{Label: "0:30 - 1:00", Value: 2.15},
+		{Label: "1:00 - 1:30", Value: 1.95},
+		{Label: "1:30 - 2:00", Value: 2.50},
+	}
+
+	//balance
+
+	dbmpk, ok := c.MustGet("dbmpk").(*sql.DB)
+	if !ok {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "failed to get database connection"})
+		return
+	}
+
+	dbopen, ok := c.MustGet("dbopen").(*sql.DB)
+	if !ok {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "failed to get database connection"})
+		return
+	}
+
+	bimbom, exists := c.Get("google_id")
+	if !exists {
+		c.JSON(http.StatusUnauthorized, gin.H{"error": "google_id not found in context"})
+		return
+	}
+
+	googleID, ok := bimbom.(string)
+	if !ok {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Invalid google_id type"})
+		return
+	}
+
+	fmt.Println("gettripdetails googleid:", googleID)
+
+	var balance float64
+	err := dbmpk.QueryRow("SELECT balance FROM users WHERE google_id = ?", googleID).
+		Scan(&balance)
+	if err != nil {
+		fmt.Println(err)
+		c.JSON(http.StatusNotFound, gin.H{"error": "User not found"})
+		return
+	}
+
+	var tripDetails serialization.TripDetails
+	err = dbopen.QueryRow("SELECT DISTINCT st.stop_id, t.trip_headsign AS line\nFROM stop_times AS st\nJOIN trips AS t ON st.trip_id = t.trip_id\nJOIN routes AS r ON t.route_id = r.route_id\nJOIN stops AS s ON st.stop_id = s.stop_id\nWHERE\ns.stop_name = ?\nAND arrival_time = ?\nAND r.route_id = ? \nAND direction_id = ? \nAND t.service_id IN (\n        SELECT service_id FROM calendar\n        WHERE\n            (\n            (DAYOFWEEK(CURDATE()) = 1 AND sunday = 1) OR\n            (DAYOFWEEK(CURDATE()) = 2 AND monday = 1) OR\n            (DAYOFWEEK(CURDATE()) = 3 AND tuesday = 1) OR\n            (DAYOFWEEK(CURDATE()) = 4 AND wednesday = 1) OR\n            (DAYOFWEEK(CURDATE()) = 5 AND thursday = 1) OR\n            (DAYOFWEEK(CURDATE()) = 6 AND friday = 1) OR\n            (DAYOFWEEK(CURDATE()) = 7 AND saturday = 1)\n          )\n      )", get.StopName, get.ArrivalTime, get.RouteID, get.DirectionID).
+		Scan(&tripDetails.StopID, &tripDetails.Line)
+	if err != nil {
+		fmt.Println(err)
+		c.JSON(http.StatusNotFound, gin.H{"error": "Trip Details not found"})
+		return
+	}
+
+	tripDetails.TramID = get.RouteID
+	tripDetails.StopName = get.StopName
+	tripDetails.ArrivalTime = get.ArrivalTime
+	tripDetails.Odds = rates
+	tripDetails.Balance = balance
+
+	c.JSON(http.StatusOK, tripDetails)
+}
+
+/*
+type TripDetails struct {
+TramID      string    `json:"route_id"` --
+StopID      int       `json:"stop_id"` --
+StopName    string    `json:"stop_name"` --
+Line		string    `json:"line"` --
+ArrivalTime string    `json:"arrival_time"` --
+Odds        []Odd 	  `json:"odds"` --
+Balance     int       `json:"balance"`
+}
+*/
+
 func GetUserInfo(c *gin.Context) {
 	db, ok := c.MustGet("dbmpk").(*sql.DB)
 	if !ok {
@@ -346,7 +437,9 @@ func PostBet(c *gin.Context) {
 		return
 	}
 
-	_, err := db.Query("INSERT INTO bets (bet_id, tram_line_id, stop_id, placed_at, bet_rate, bet_amount, status, predicted_time, google_id) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)", bet.BetID, bet.TramLineID, bet.StopID, bet.PlacedAt, bet.BetRate, bet.BetAmount, bet.Status, bet.PredictedTime, bet.GoogleID)
+	// tram line id -> route_id
+
+	_, err := db.Query("INSERT INTO bets (tram_line_id, stop_id, placed_at, bet_rate, bet_amount, status, predicted_time, google_id) VALUES (?, ?, ?, ?, ?, ?, ?, ?)", bet.TramLineID, bet.StopID, bet.PlacedAt, bet.BetRate, bet.BetAmount, bet.Status, bet.PredictedTime, bet.GoogleID)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "Could not place bet"})
 		return

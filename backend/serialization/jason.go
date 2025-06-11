@@ -124,6 +124,7 @@ type Stops struct {
 }
 
 // Trips represents the trips table
+/*
 type Trips struct {
 	RouteID      *string `json:"route_id,omitempty"`
 	ServiceID    *int    `json:"service_id,omitempty"`
@@ -134,6 +135,17 @@ type Trips struct {
 	BrigadeID    *int    `json:"brigade_id,omitempty"`
 	VehicleID    *int    `json:"vehicle_id,omitempty"`
 	VariantID    *int    `json:"variant_id,omitempty"`
+}
+*/
+
+type TripDetails struct {
+	TramID      string  `json:"route_id"`
+	StopID      int     `json:"stop_id"`
+	StopName    string  `json:"stop_name"`
+	Line        string  `json:"line"`
+	ArrivalTime string  `json:"arrival_time"`
+	Odds        []Odd   `json:"odds"`
+	Balance     float64 `json:"balance"`
 }
 
 // /stops
